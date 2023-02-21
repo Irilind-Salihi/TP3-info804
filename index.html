@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>A small introduction to three.js webgl [1]</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="stylesheet" href="css/basic.css">
+
+	<script src="three.js"></script>
+	<script src="js/Detector.js"></script>
+	<script type="text/javascript">
+	
+		// Checks that your browser supports WebGL. 
+		if (!Detector.webgl) Detector.addGetWebGLMessage();
+
+		var renderer = null;
+		var solarSystemScene = null;
+		var camera = null;
+		var earth     = null;
+		var earthGroup = new THREE.Group();
+		var moon      = null;
+		var moonGroup = new THREE.Group();
+		var sun      = null;
+		var sunGroup = new THREE.Group();
+		var curTime = Date.now();
+
+		// This function is called whenever the document is loaded
+		function init() {
+			// Get display canvas
+			var canvas = document.getElementById("webglcanvas");
+			console.log(canvas);
+
+			// Create the Three.js renderer and attach it to our canvas
+			renderer = new THREE.WebGLRenderer({
+				canvas: canvas,
+				antialias: true
+			});
+			// Set the viewport size
+			renderer.setSize(canvas.width, canvas.height);
+			// Create a new Three.js scene
+			solarSystemScene = new THREE.Scene();
+			// Add  a camera so we can view the scene
+			camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 4000);
+			// Create a texture-mapped earth and add it to the scene
+			// First, create the texture map
+			var mapUrl = "images/earth_atmos_2048.jpg";
+			var moonMapUrl = "images/moon_1024.jpg";
+			var sunMapUrl = "images/sun.jpg";
+			var map = new THREE.TextureLoader().load(mapUrl);
+			var moonMap = new THREE.TextureLoader().load(moonMapUrl);
+			var sunMap = new THREE.TextureLoader().load(sunMapUrl);
+
+			// Now, create a Basic material; pass in the map
+			var material = new THREE.MeshPhongMaterial({ map: map });
+			var moonMaterial = new THREE.MeshPhongMaterial({ map: moonMap });
+			var sunMaterial = new THREE.MeshBasicMaterial({ map: sunMap });
+
+			// Create the earth geometry
+			var geometry = new THREE.SphereGeometry(2, 32, 32);
+			var moonGeometry = new THREE.SphereGeometry(1, 32, 32);
+			var sunGeometry = new THREE.SphereGeometry(6, 32,32);
+
+			// And put the geometry and material together into a mesh
+			earth = new THREE.Mesh(geometry, material);
+			moon = new THREE.Mesh(moonGeometry, moonMaterial);
+			sun = new THREE.Mesh(sunGeometry, sunMaterial);
+			light = new THREE.PointLight(0xffffff, 1, 50);
+
+			sun.position.set(0, 0, 0);
+			earth.position.set(15, 0, 0);
+			moonGroup.position.set(15, 0, 0);
+			moon.position.set(4, 0, 0);
+			
+			moonGroup.add(moon);
+            earthGroup.add(earth);
+            earthGroup.add(moonGroup);
+            sunGroup.add(sun);
+            sunGroup.add(earthGroup);
+            sunGroup.add(light);
+            sunGroup.position.z = -50;
+
+			var path = "images/MilkyWay/";
+			var format = '.jpg';
+			var urls = [
+				path + 'posx' + format, path + 'negx' + format,
+				path + 'posy' + format, path + 'negy' + format,
+				path + 'posz' + format, path + 'negz' + format
+			];
+			
+			var textureCube    = new THREE.CubeTextureLoader().load( urls );
+			textureCube.format = THREE.RGBFormat;
+			solarSystemScene.background   = textureCube;
+
+            solarSystemScene.add(sunGroup);
+		}
+
+
+		// This function is called regularly to update the canvas webgl.
+		function run() {
+			// Ask to call again run 
+			requestAnimationFrame(run);
+
+			// Render the scene
+			render();
+
+			// Calls the animate function if objects or camera should move
+			animate();
+		}
+
+		// This function is called regularly to take care of the rendering.
+		function render() {
+			// Render the scene
+			// renderer.render(scene, camera);
+			renderer.render(solarSystemScene, camera);
+		}
+
+		// This function is called regularly to update objects.
+		function animate() {
+			// Computes how time has changed since last display
+			var now = Date.now();
+			var deltaTime = now - curTime;
+			curTime = now;
+			var fracTime = deltaTime / 1000; // in seconds
+			// Now we can move objects, camera, etc.
+			// Example: rotation earth
+			var angle = fracTime * Math.PI * 2;
+			earthGroup.rotation.z += angle / 60;
+			earth.rotation.z += angle / 2;
+			moonGroup.rotation.z += angle / 2;
+			moon.rotation.z += angle / 28;
+			sun.rotation.z += angle / 60;
+		}
+
+	</script>
+</head>
+
+<body>
+	<div id="info"> a first three.js example </div>
+	<canvas id="webglcanvas" style="border: none;background-color:#000000" width="600" height="500"></canvas>
+	<!-- We run the WebGL code at the end to be sure that the document is loaded.
+      -->
+	<script>
+		init(); run();
+	</script>
+</body>
+
+</html>
